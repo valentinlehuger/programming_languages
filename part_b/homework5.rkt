@@ -32,9 +32,6 @@
       null
       (cons (apair-e1 mlist) (mupllist->racketlist (apair-e2 mlist)))))
 
-
-;; CHANGE (put your solutions here)
-
 ;; Problem 2
 
 ;; lookup a variable in an environment
@@ -59,18 +56,24 @@
                (int (+ (int-num v1) 
                        (int-num v2)))
                (error "MUPL addition applied to non-number")))]
-        [(int? e) (if (integer? (int-num e))
-                  e
-                  (error "non-number stored as MUPL int"))]
+        [(var? e) (if (string? (var-string e)) e (error "non-string stored as MUPL var"))]
+        [(int? e) (if (integer? (int-num e)) e (error "non-number stored as MUPL int"))]
+        [(fst? e) (if (apair? (fst-e e)) (apair-e1 (fst-e e)) (error "non-pair stored in fst"))]
+        [(snd? e) (if (apair? (snd-e e)) (apair-e2 (snd-e e)) (error "non-pair stored in snd"))]
         [(ifgreater? e)
-          (let ([v1 (eval-under-env (ifgreater-e1 e) env)]
-                [v2 (eval-under-env (ifgreater-e2 e) env)])
-               (if (and (int? v1)
-                        (int? v2))
-                   (if (> (int-num v1) (int-num v2))
-                       (eval-under-env (ifgreater-e3 e) env)
-                       (eval-under-env (ifgreater-e4 e) env))
+         (let ([v1 (eval-under-env (ifgreater-e1 e) env)]
+               [v2 (eval-under-env (ifgreater-e2 e) env)])
+              (if (and (int? v1)
+                       (int? v2))
+                  (if (> (int-num v1) (int-num v2))
+                      (eval-under-env (ifgreater-e3 e) env)
+                      (eval-under-env (ifgreater-e4 e) env))
                    (error "MUPL comparison applied to non-number")))]
+        [(mlet? e)
+          (if (string? (mlet-var e))
+            (let ([newenv (cons (cons (mlet-var e) (eval-under-env (mlet-e e) env)) env)])
+                 (eval-under-env (mlet-body e) newenv))
+          (error "Not a legal MUPL var"))]
         [#t (error (format "bad MUPL expression: ~v" e))]))
 
 ;; Do NOT change
