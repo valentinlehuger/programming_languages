@@ -58,6 +58,9 @@
                (error "MUPL addition applied to non-number")))]
         [(var? e) (if (string? (var-string e)) e (error "non-string stored as MUPL var"))]
         [(int? e) (if (integer? (int-num e)) e (error "non-number stored as MUPL int"))]
+        [(aunit? e) e]
+        [(fun? e) (closure env e)]
+        [(closure? e) e]
         [(fst? e) (if (apair? (fst-e e)) (apair-e1 (fst-e e)) (error "non-pair stored in fst"))]
         [(snd? e) (if (apair? (snd-e e)) (apair-e2 (snd-e e)) (error "non-pair stored in snd"))]
         [(ifgreater? e)
@@ -73,7 +76,19 @@
           (if (string? (mlet-var e))
             (let ([newenv (cons (cons (mlet-var e) (eval-under-env (mlet-e e) env)) env)])
                  (eval-under-env (mlet-body e) newenv))
-          (error "Not a legal MUPL var"))]
+            (error "Not a legal MUPL var"))]
+        [(call? e)
+          (let ([clos (call-funexp e)]
+                [v2 (call-actual e)])
+            (if (closure? clos)
+                (eval-under-env 
+                  (mlet
+                    (fun-formal (closure-fun clos)) v2
+                    (fun-body (closure-fun clos)))
+                  (closure-env clos))
+                (error ("first call argument is not a closure"))))]
+        [(isaunit? e) (if (aunit? (eval-under-env (isaunit-e e) env))
+                          (int 1) (int 0))]
         [#t (error (format "bad MUPL expression: ~v" e))]))
 
 ;; Do NOT change
